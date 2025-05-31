@@ -1,23 +1,81 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Overlay Discord</title>
-  <style>
-    body { background: transparent; margin: 0; color: white; font-family: sans-serif; }
-    #messages { font-size: 1.5rem; padding: 1rem; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Discord Overlay</title>
+<style>
+  body {
+    background: transparent;
+    color: white;
+    font-family: Arial, sans-serif;
+    padding: 10px;
+  }
+  .message {
+    margin-bottom: 15px;
+    border-bottom: 1px solid #555;
+    padding-bottom: 10px;
+  }
+  .author {
+    font-weight: bold;
+  }
+  img {
+    max-width: 300px;
+    max-height: 200px;
+    display: block;
+    margin-top: 5px;
+    border-radius: 6px;
+  }
+</style>
 </head>
 <body>
-  <div id="messages">En attente de messages...</div>
-  <script>
-    const messages = document.getElementById('messages');
-    const ws = new WebSocket(`wss://${location.host}`);
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      messages.innerHTML = `<strong>${data.author}</strong>: ${data.content}`;
-    };
-  </script>
+<div id="messages"></div>
+
+<script>
+  const messagesContainer = document.getElementById('messages');
+  const socket = new WebSocket(`ws://${location.host}`);
+
+  socket.onopen = () => {
+    console.log('WebSocket connecté');
+  };
+
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message');
+
+    const authorEl = document.createElement('div');
+    authorEl.classList.add('author');
+    authorEl.textContent = data.author;
+    messageDiv.appendChild(authorEl);
+
+    if (data.content) {
+      const contentEl = document.createElement('div');
+      contentEl.textContent = data.content;
+      messageDiv.appendChild(contentEl);
+    }
+
+    if (data.attachments && data.attachments.length > 0) {
+      data.attachments.forEach(url => {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = "Image";
+        messageDiv.appendChild(img);
+      });
+    }
+
+    messagesContainer.appendChild(messageDiv);
+
+    // Scroll automatique vers le bas
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  };
+
+  socket.onclose = () => {
+    console.log('WebSocket déconnecté');
+  };
+</script>
+
 </body>
 </html>
