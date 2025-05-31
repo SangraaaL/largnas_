@@ -61,10 +61,13 @@
           const proxyUrl = `/image-proxy?url=${encodeURIComponent(url)}`;
 
           if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-            const img = document.createElement('img');
-            img.src = proxyUrl;
-            img.className = 'attachment';
-            messageEl.appendChild(img);
+  const img = document.createElement('img');
+  const proxyUrl = '/image-proxy?url=' + encodeURIComponent(url); // ✅ ligne à ajouter
+  img.src = proxyUrl; // ✅ remplace l’ancienne ligne
+  img.className = 'attachment';
+  messageEl.appendChild(img);
+}
+
           } else if (['mp4', 'webm'].includes(ext)) {
             const video = document.createElement('video');
             video.src = proxyUrl;
