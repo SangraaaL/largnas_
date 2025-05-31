@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Overlay Discord</title>
   <style>
     body {
@@ -54,12 +54,10 @@
       messageEl.appendChild(authorSpan);
       messageEl.appendChild(contentSpan);
 
-      // Affiche les pièces jointes (images/vidéos) via proxy
       if (Array.isArray(data.attachments)) {
         data.attachments.forEach(url => {
           const ext = url.split('.').pop().toLowerCase();
-          const proxyUrl = '/image-proxy?url=' + encodeURIComponent(url);
-
+          const proxyUrl = `/image-proxy?url=${encodeURIComponent(url)}`;
           if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
             const img = document.createElement('img');
             img.src = proxyUrl;
