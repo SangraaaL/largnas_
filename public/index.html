@@ -22,10 +22,9 @@
       font-weight: bold;
       margin-right: 5px;
     }
-    iframe {
-      width: 400px;
-      height: 250px;
-      border: none;
+    .attachment {
+      display: block;
+      max-width: 400px;
       margin-top: 10px;
     }
   </style>
@@ -58,12 +57,16 @@
       messageEl.appendChild(authorSpan);
       messageEl.appendChild(contentSpan);
 
-      // Si lien d'image ou autre, tenter d’embed avec iframe
+      // Affiche les images via proxy
       if (Array.isArray(data.attachments)) {
         data.attachments.forEach(url => {
-          const iframe = document.createElement('iframe');
-          iframe.src = url;
-          messageEl.appendChild(iframe);
+          const ext = url.split('.').pop().toLowerCase();
+          if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+            const img = document.createElement('img');
+            img.className = 'attachment';
+            img.src = `/image-proxy?url=${encodeURIComponent(url)}`;
+            messageEl.appendChild(img);
+          }
         });
       }
 
