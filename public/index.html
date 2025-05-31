@@ -54,13 +54,17 @@
       messageEl.appendChild(authorSpan);
       messageEl.appendChild(contentSpan);
 
+      // Gestion des pièces jointes avec proxy CORS-anywhere
       if (Array.isArray(data.attachments)) {
         data.attachments.forEach(url => {
           const ext = url.split('.').pop().toLowerCase();
-          const proxyUrl = `/image-proxy?url=${encodeURIComponent(url)}`;
+
+          // Proxy public pour contourner CORS
+          const proxyUrl = 'https://cors-anywhere.herokuapp.com/' + url;
+
           if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
             const img = document.createElement('img');
-            img.src = proxyUrl;
+            img.src = proxyUrl; // utilise proxy
             img.className = 'attachment';
             messageEl.appendChild(img);
           } else if (['mp4', 'webm'].includes(ext)) {
