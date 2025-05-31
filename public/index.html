@@ -54,22 +54,19 @@
       messageEl.appendChild(authorSpan);
       messageEl.appendChild(contentSpan);
 
-      // Gestion des pièces jointes avec proxy CORS-anywhere
+      // Affiche directement les images/vidéos sans proxy
       if (Array.isArray(data.attachments)) {
         data.attachments.forEach(url => {
           const ext = url.split('.').pop().toLowerCase();
 
-          // Proxy public pour contourner CORS
-          const proxyUrl = 'https://cors-anywhere.herokuapp.com/' + url;
-
           if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
             const img = document.createElement('img');
-            img.src = proxyUrl; // utilise proxy
+            img.src = url;  // direct URL, pas de proxy
             img.className = 'attachment';
             messageEl.appendChild(img);
           } else if (['mp4', 'webm'].includes(ext)) {
             const video = document.createElement('video');
-            video.src = proxyUrl;
+            video.src = url;
             video.controls = true;
             video.className = 'attachment';
             messageEl.appendChild(video);
