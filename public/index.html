@@ -52,23 +52,19 @@
       messageEl.appendChild(authorSpan);
       messageEl.appendChild(contentSpan);
 
-      // Affichage des images/vidéos
-      if (data.attachments && data.attachments.length > 0) {
+      if (Array.isArray(data.attachments)) {
         data.attachments.forEach(url => {
           const ext = url.split('.').pop().toLowerCase();
-          const cleanUrl = url.split('?')[0]; // enlève les paramètres URL Discord
+          const proxyUrl = `/proxy-image?url=${encodeURIComponent(url)}`;
           if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
             const img = document.createElement('img');
-            img.src = cleanUrl;
+            img.src = proxyUrl;
             img.className = 'attachment';
             messageEl.appendChild(img);
           } else if (['mp4', 'webm'].includes(ext)) {
             const video = document.createElement('video');
-            video.src = cleanUrl;
+            video.src = proxyUrl;
             video.controls = true;
-            video.autoplay = true;
-            video.muted = true;
-            video.loop = true;
             video.className = 'attachment';
             messageEl.appendChild(video);
           }
@@ -76,6 +72,7 @@
       }
 
       messagesDiv.appendChild(messageEl);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
   </script>
 </body>
