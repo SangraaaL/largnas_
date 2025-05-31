@@ -57,4 +57,23 @@
         data.attachments.forEach(url => {
           const ext = url.split('.').pop().toLowerCase();
           if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-            const img = docu
+            const img = document.createElement('img');
+            img.src = url;
+            img.className = 'attachment';
+            messageEl.appendChild(img);
+          } else if (['mp4', 'webm'].includes(ext)) {
+            const video = document.createElement('video');
+            video.src = url;
+            video.controls = true;
+            video.className = 'attachment';
+            messageEl.appendChild(video);
+          }
+        });
+      }
+
+      messagesDiv.appendChild(messageEl);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+  </script>
+</body>
+</html>
