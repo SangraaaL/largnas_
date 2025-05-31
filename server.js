@@ -22,10 +22,16 @@ client.once('ready', () => {
 
 client.login(process.env.DISCORD_TOKEN);
 
-// Ecouteur pour les messages Discord, envoie à tous les clients WebSocket connectés
 client.on('messageCreate', message => {
   if (message.channel.id === process.env.CHANNEL_ID && !message.author.bot) {
-    const payload = JSON.stringify({ content: message.content, author: message.author.username });
+    const attachments = message.attachments.map(att => att.url);
+
+    const payload = JSON.stringify({ 
+      content: message.content, 
+      author: message.author.username,
+      attachments: attachments
+    });
+
     wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(payload);
