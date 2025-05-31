@@ -52,8 +52,8 @@
       messageEl.appendChild(authorSpan);
       messageEl.appendChild(contentSpan);
 
-      // Affichage des images/vidéos
-      if (data.attachments && data.attachments.length > 0) {
+      // Affichage des pièces jointes (images/vidéos)
+      if (Array.isArray(data.attachments)) {
         data.attachments.forEach(url => {
           const ext = url.split('.').pop().toLowerCase();
           if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
