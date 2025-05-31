@@ -23,18 +23,21 @@ client.once('ready', () => {
 client.login(process.env.DISCORD_TOKEN);
 
 client.on('messageCreate', message => {
+  console.log(`Message reçu : [${message.channel.id}] ${message.author.username} -> ${message.content}`);
+
   if (message.channel.id === process.env.CHANNEL_ID && !message.author.bot) {
     const attachments = message.attachments.map(att => att.url);
-
     const payload = JSON.stringify({ 
       content: message.content, 
       author: message.author.username,
       attachments: attachments
     });
+    console.log(`Envoi payload WS: ${payload}`);
 
     wss.clients.forEach(client => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(payload);
+        console.log('Message envoyé au client WebSocket');
       }
     });
   }
