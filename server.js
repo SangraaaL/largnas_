@@ -1,62 +1,41 @@
 const express = require('express');
-const http = require('http');
-const WebSocket = require('ws');
-const { Client, GatewayIntentBits } = require('discord.js');
-const fetch = require('node-fetch');
+const { WebSocketServer } = require('ws');
+const path = require('path');
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
 const PORT = process.env.PORT || 3000;
 
-const client = new Client({ intents: [
-  GatewayIntentBits.Guilds,
-  GatewayIntentBits.GuildMessages,
-  GatewayIntentBits.MessageContent
-]});
+// Servir les fichiers statiques
+app.use(express.static(path.join(__dirname, 'public')));
 
-client.once('ready', () => {
-  console.log(`✅ Connecté à Discord comme ${client.user.tag}`);
-});
-
-client.login(process.env.DISCORD_TOKEN);
-
-wss.on('connection', (ws) => {
-  console.log('🔌 Client WebSocket connecté');
-
-  // On écoute les messages Discord et on les envoie aux clients WS
-  client.on('messageCreate', message => {
-    if (message.channel.id === process.env.CHANNEL_ID && !message.author.bot) {
-      const attachments = message.attachments.map(att => att.url);
-      ws.send(JSON.stringify({
-        content: message.content,
-        author: message.author.username,
-        attachments: attachments
-      }));
-    }
-  });
-});
-
-// Proxy pour les images
+// Proxy pour contourner CORS
 app.get('/image-proxy', async (req, res) => {
   try {
-    const url = req.query.url;
-    if (!url) return res.status(400).send('Missing url param');
-
-    const response = await fetch(url);
-    if (!response.ok) return res.status(500).send('Error fetching image');
-
-    // On forward le Content-Type du serveur source
-    res.setHeader('Content-Type', response.headers.get('content-type'));
+    const imageUrl = req.query.url;
+    const response = await fetch(imageUrl);
+    const contentType = response.headers.get('content-type');
+    res.setHeader('Content-Type', contentType);
     response.body.pipe(res);
   } catch (error) {
     console.error('Erreur proxy image:', error);
-    res.status(500).send('Proxy error');
+    res.status(500).send('Erreur proxy image');
   }
 });
 
-app.use(express.static('public'));
+const server = app.listen(PORT, () => {
+  console.log(`✅ Serveur HTTP en écoute sur le port ${PORT}`);
+});
 
-server.listen(PORT, () => {
-  console.log(`🌐 Serveur HTTP+WebSocket lancé sur le port ${PORT}`);
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', ws => {
+  console.log('🌐 Client WebSocket connecté');
+
+  // Simule un message de test pour debug rapide
+  ws.send(JSON.stringify({
+    author: "Bot",
+    content: "Ceci est un test",
+    attachments: ["https://cdn.discordapp.com/attachments/0000000000000/test.jpg"]
+  }));
 });
