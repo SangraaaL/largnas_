@@ -54,25 +54,20 @@
       messageEl.appendChild(authorSpan);
       messageEl.appendChild(contentSpan);
 
-      // Affiche directement les images/vidéos sans proxy
-      if (Array.isArray(data.attachments)) {
-        data.attachments.forEach(url => {
-          const ext = url.split('.').pop().toLowerCase();
+if (Array.isArray(data.attachments)) {
+  data.attachments.forEach(url => {
+    const ext = url.split('.').pop().toLowerCase();
 
-          if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-            const img = document.createElement('img');
-            img.src = url;  // direct URL, pas de proxy
-            img.className = 'attachment';
-            messageEl.appendChild(img);
-          } else if (['mp4', 'webm'].includes(ext)) {
-            const video = document.createElement('video');
-            video.src = url;
-            video.controls = true;
-            video.className = 'attachment';
-            messageEl.appendChild(video);
-          }
-        });
-      }
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+      const img = document.createElement('img');
+      img.src = url;
+      img.crossOrigin = "anonymous"; // ← important pour éviter les problèmes CORS
+      img.className = 'attachment';
+      img.style.maxWidth = '400px';
+      messageEl.appendChild(img);
+    }
+  });
+}
 
       messagesDiv.appendChild(messageEl);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
