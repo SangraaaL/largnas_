@@ -1,28 +1,32 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Overlay Discord</title>
   <style>
     body {
       background-color: transparent;
       color: white;
       font-family: Arial, sans-serif;
-      font-size: 20px;
+      font-size: 18px;
       margin: 0;
       padding: 10px;
     }
     .message {
-      margin-bottom: 10px;
+      margin-bottom: 15px;
+      padding: 10px;
+      background-color: rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
     }
     .author {
       font-weight: bold;
       margin-right: 5px;
     }
-    .attachment {
-      display: block;
-      max-width: 400px;
-      margin-top: 5px;
+    iframe {
+      width: 400px;
+      height: 250px;
+      border: none;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -54,23 +58,22 @@
       messageEl.appendChild(authorSpan);
       messageEl.appendChild(contentSpan);
 
-if (Array.isArray(data.attachments)) {
-  data.attachments.forEach(url => {
-    const ext = url.split('.').pop().toLowerCase();
-
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-      const img = document.createElement('img');
-      img.src = url;
-      img.crossOrigin = "anonymous"; // ← important pour éviter les problèmes CORS
-      img.className = 'attachment';
-      img.style.maxWidth = '400px';
-      messageEl.appendChild(img);
-    }
-  });
-}
+      // Si lien d'image ou autre, tenter d’embed avec iframe
+      if (Array.isArray(data.attachments)) {
+        data.attachments.forEach(url => {
+          const iframe = document.createElement('iframe');
+          iframe.src = url;
+          messageEl.appendChild(iframe);
+        });
+      }
 
       messagesDiv.appendChild(messageEl);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+      // Supprime après 5 secondes
+      setTimeout(() => {
+        messagesDiv.removeChild(messageEl);
+      }, 5000);
     });
   </script>
 </body>
