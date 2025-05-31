@@ -2,14 +2,20 @@ const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const { Client, GatewayIntentBits } = require('discord.js');
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const PORT = process.env.PORT || 3000;
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
+});
 
 client.once('ready', () => {
   console.log(`✅ Connecté à Discord comme ${client.user.tag}`);
@@ -17,52 +23,43 @@ client.once('ready', () => {
 
 client.login(process.env.DISCORD_TOKEN);
 
-// WebSocket clients
+// Envoi des messages aux clients WebSocket
 wss.on('connection', (ws) => {
   console.log('🔌 Client WebSocket connecté');
 
-  // On envoie pas les anciens messages ici, juste les nouveaux
-
-  // Quand un message Discord arrive
   client.on('messageCreate', message => {
     if (message.channel.id === process.env.CHANNEL_ID && !message.author.bot) {
-      // On extrait le contenu et les URLs des pièces jointes
       const attachments = message.attachments.map(att => att.url);
-
-      // On envoie un JSON aux clients websocket
-      ws.send(JSON.stringify({
+      const payload = {
         content: message.content,
         author: message.author.username,
         attachments
-      }));
+      };
+      console.log('📤 Envoi payload WS:', payload);
+      ws.send(JSON.stringify(payload));
     }
   });
 });
 
-// Proxy d’image pour contourner CORS et hotlinking
-app.get('/proxy-image', async (req, res) => {
-  const imageUrl = req.query.url;
-  if (!imageUrl) {
-    return res.status(400).send('Missing url parameter');
-  }
-
+// Proxy d'image pour contourner les restrictions Discord
+app.get('/image-proxy', async (req, res) => {
   try {
-    // On récupère l’image depuis Discord CDN
-    const response = await fetch(imageUrl);
-    if (!response.ok) return res.status(response.status).send('Failed to fetch image');
+    const url = req.query.url;
+    if (!url) return res.status(400).send('URL manquante');
 
-    // On copie les headers pertinents (Content-Type)
-    res.set('Content-Type', response.headers.get('content-type') || 'image/jpeg');
-    // On pipe directement la réponse au client
+    const response = await fetch(url);
+    if (!response.ok) return res.status(500).send('Erreur récupération image');
+
+    res.set('Content-Type', response.headers.get('content-type') || 'image/png');
     response.body.pipe(res);
   } catch (err) {
-    console.error('Erreur proxy image:', err);
-    res.status(500).send('Internal Server Error');
+    console.error('❌ Erreur proxy:', err);
+    res.status(500).send('Erreur serveur');
   }
 });
 
 app.use(express.static('public'));
 
 server.listen(PORT, () => {
-  console.log(`🌐 Serveur HTTP+WebSocket lancé sur le port ${PORT}`);
+  console.log(`🌐 Serveur lancé sur le port ${PORT}`);
 });
