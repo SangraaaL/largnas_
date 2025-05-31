@@ -8,19 +8,34 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const PORT = process.env.PORT || 3000;
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({ 
+  intents: [
+    GatewayIntentBits.Guilds, 
+    GatewayIntentBits.GuildMessages, 
+    GatewayIntentBits.MessageContent
+  ] 
+});
+
 client.once('ready', () => {
   console.log(`✅ Connecté à Discord comme ${client.user.tag}`);
 });
+
 client.login(process.env.DISCORD_TOKEN);
+
+// Ecouteur pour les messages Discord, envoie à tous les clients WebSocket connectés
+client.on('messageCreate', message => {
+  if (message.channel.id === process.env.CHANNEL_ID && !message.author.bot) {
+    const payload = JSON.stringify({ content: message.content, author: message.author.username });
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(payload);
+      }
+    });
+  }
+});
 
 wss.on('connection', (ws) => {
   console.log('🔌 Client WebSocket connecté');
-  client.on('messageCreate', message => {
-    if (message.channel.id === process.env.CHANNEL_ID && !message.author.bot) {
-      ws.send(JSON.stringify({ content: message.content, author: message.author.username }));
-    }
-  });
 });
 
 app.use(express.static('public'));
