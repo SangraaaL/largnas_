@@ -1,81 +1,60 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Discord Overlay</title>
-<style>
-  body {
-    background: transparent;
-    color: white;
-    font-family: Arial, sans-serif;
-    padding: 10px;
-  }
-  .message {
-    margin-bottom: 15px;
-    border-bottom: 1px solid #555;
-    padding-bottom: 10px;
-  }
-  .author {
-    font-weight: bold;
-  }
-  img {
-    max-width: 300px;
-    max-height: 200px;
-    display: block;
-    margin-top: 5px;
-    border-radius: 6px;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>Overlay Discord</title>
+  <style>
+    body {
+      background-color: transparent;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 20px;
+    }
+    .message {
+      margin-bottom: 10px;
+    }
+    .author {
+      font-weight: bold;
+      margin-right: 5px;
+    }
+    .attachment {
+      display: block;
+      max-width: 400px;
+      margin-top: 5px;
+    }
+  </style>
 </head>
 <body>
+  <div id="messages"></div>
 
-<div id="messages"></div>
+  <script>
+    const messagesDiv = document.getElementById('messages');
+    const socket = new WebSocket(`wss://${location.host}`);
 
-<script>
-  const messagesContainer = document.getElementById('messages');
-  const socket = new WebSocket(`wss://${location.host}`);
+    socket.addEventListener('open', () => {
+      console.log('✅ WebSocket connecté');
+    });
 
-  socket.onopen = () => {
-    console.log('WebSocket connecté');
-  };
+    socket.addEventListener('message', (event) => {
+      const data = JSON.parse(event.data);
+      console.log('📨 Reçu:', data);
 
-  socket.onmessage = (event) => {
-    const data = JSON.parse(event.data);
+      const messageEl = document.createElement('div');
+      messageEl.className = 'message';
 
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('message');
+      const authorSpan = document.createElement('span');
+      authorSpan.className = 'author';
+      authorSpan.textContent = data.author + ':';
 
-    const authorEl = document.createElement('div');
-    authorEl.classList.add('author');
-    authorEl.textContent = data.author;
-    messageDiv.appendChild(authorEl);
+      const contentSpan = document.createElement('span');
+      contentSpan.textContent = ' ' + data.content;
 
-    if (data.content) {
-      const contentEl = document.createElement('div');
-      contentEl.textContent = data.content;
-      messageDiv.appendChild(contentEl);
-    }
+      messageEl.appendChild(authorSpan);
+      messageEl.appendChild(contentSpan);
 
-    if (data.attachments && data.attachments.length > 0) {
-      data.attachments.forEach(url => {
-        const img = document.createElement('img');
-        img.src = url;
-        img.alt = "Image";
-        messageDiv.appendChild(img);
-      });
-    }
-
-    messagesContainer.appendChild(messageDiv);
-
-    // Scroll automatique vers le bas
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-  };
-
-  socket.onclose = () => {
-    console.log('WebSocket déconnecté');
-  };
-</script>
-
-</body>
-</html>
+      // Affichage des images/vidéos
+      if (data.attachments && data.attachments.length > 0) {
+        data.attachments.forEach(url => {
+          const ext = url.split('.').pop().toLowerCase();
+          if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+            const img = docu
