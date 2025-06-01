@@ -1,22 +1,20 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Overlay Discord</title>
   <style>
     body {
       background-color: transparent;
       color: white;
       font-family: Arial, sans-serif;
-      font-size: 18px;
+      font-size: 20px;
       margin: 0;
       padding: 10px;
     }
     .message {
-      margin-bottom: 15px;
-      padding: 10px;
-      background-color: rgba(0, 0, 0, 0.5);
-      border-radius: 8px;
+      margin-bottom: 10px;
+      animation: fadeOut 0.5s ease-out 4.5s forwards;
     }
     .author {
       font-weight: bold;
@@ -25,7 +23,16 @@
     .attachment {
       display: block;
       max-width: 400px;
-      margin-top: 10px;
+      margin-top: 5px;
+    }
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        height: 0;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
     }
   </style>
 </head>
@@ -34,15 +41,22 @@
 
   <script>
     const messagesDiv = document.getElementById('messages');
-    const socket = new WebSocket(`wss://${location.host}`);
 
-    socket.addEventListener('open', () => {
-      console.log('✅ WebSocket connecté');
-    });
+    // Simuler la réception d'un message
+    const testEvent = {
+      data: JSON.stringify({
+        author: "test_user",
+        content: "Voici une image de test",
+        attachments: ["https://cdn.discordapp.com/attachments/632555641361137715/1378489957726814289/Sonos-logo.png"]
+      })
+    };
 
-    socket.addEventListener('message', (event) => {
+    const event = new MessageEvent("message", testEvent);
+    window.dispatchEvent(event);
+
+    window.addEventListener('message', (event) => {
       const data = JSON.parse(event.data);
-      console.log('📨 Reçu:', data);
+      console.log('Message reçu:', data);
 
       const messageEl = document.createElement('div');
       messageEl.className = 'message';
@@ -57,25 +71,31 @@
       messageEl.appendChild(authorSpan);
       messageEl.appendChild(contentSpan);
 
-      // Affiche les images via proxy
       if (Array.isArray(data.attachments)) {
         data.attachments.forEach(url => {
           const ext = url.split('.').pop().toLowerCase();
+          const proxyUrl = `/image-proxy?url=${encodeURIComponent(url)}`;
+
           if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
             const img = document.createElement('img');
+            img.src = proxyUrl;
             img.className = 'attachment';
-            img.src = `/image-proxy?url=${encodeURIComponent(url)}`;
             messageEl.appendChild(img);
+          } else if (['mp4', 'webm'].includes(ext)) {
+            const video = document.createElement('video');
+            video.src = proxyUrl;
+            video.controls = true;
+            video.className = 'attachment';
+            messageEl.appendChild(video);
           }
         });
       }
 
       messagesDiv.appendChild(messageEl);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-      // Supprime après 5 secondes
+      // Supprimer le message après 5 secondes
       setTimeout(() => {
-        messagesDiv.removeChild(messageEl);
+        messageEl.remove();
       }, 5000);
     });
   </script>
