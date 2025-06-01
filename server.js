@@ -1,41 +1,40 @@
-const express = require('express');
-const { WebSocketServer } = require('ws');
-const path = require('path');
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+import express from 'express';
+import fetch from 'node-fetch';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
-// Servir les fichiers statiques
+// Déterminer le chemin du répertoire actuel
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Servir les fichiers statiques depuis le dossier 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Proxy pour contourner CORS
+// Route pour le proxy d'images
 app.get('/image-proxy', async (req, res) => {
+  const imageUrl = req.query.url;
+  if (!imageUrl) {
+    return res.status(400).send('URL requise');
+  }
+
   try {
-    const imageUrl = req.query.url;
     const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`Échec de la récupération de l'image: ${response.statusText}`);
+    }
     const contentType = response.headers.get('content-type');
-    res.setHeader('Content-Type', contentType);
+    res.set('Content-Type', contentType);
     response.body.pipe(res);
   } catch (error) {
     console.error('Erreur proxy image:', error);
-    res.status(500).send('Erreur proxy image');
+    res.status(500).send('Erreur lors de la récupération de l\'image');
   }
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`✅ Serveur HTTP en écoute sur le port ${PORT}`);
-});
-
-const wss = new WebSocketServer({ server });
-
-wss.on('connection', ws => {
-  console.log('🌐 Client WebSocket connecté');
-
-  // Simule un message de test pour debug rapide
-  ws.send(JSON.stringify({
-    author: "Bot",
-    content: "Ceci est un test",
-    attachments: ["https://cdn.discordapp.com/attachments/0000000000000/test.jpg"]
-  }));
+// Démarrer le serveur
+app.listen(PORT, () => {
+  console.log(`Serveur lancé sur http://localhost:${PORT}`);
 });
